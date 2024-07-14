@@ -8,8 +8,8 @@
 // ピン
 #define PIN_RXD2        16
 #define PIN_TXD2        17
-#define PIN_ENC_CLK     26
-#define PIN_ENC_DT      36
+#define PIN_ENC_CLK     36
+#define PIN_ENC_DT      26
 
 // 鍵盤入力のIOエキスパンダのI2Cスレーブアドレス
 #define ADDR_KB1       0x20    // 低音側
@@ -37,7 +37,7 @@ uint8_t crank_getVelocity();
 void setup()
 {
     // シリアルポートの初期化(デバッグ用)
-//  Serial.begin(115200); // ← DisplayUI_begin()を実行する場合には不要
+    Serial.begin(115200); // ← DisplayUI_begin()を実行する場合には不要
     
     // 鍵盤の初期化
     keyboard_begin();
@@ -59,6 +59,7 @@ void loop()
     if(interval1.elapsed()){
         uint8_t key = keyboard_getKey();
         uint8_t velocity = crank_getVelocity();
+        // Serial.printf("%d %d\n", key, velocity);
         synth.setNoteOn(0, key, velocity);
     }
 }
@@ -91,35 +92,37 @@ void keyboard_begin()
 // 鍵盤の入力を取得
 uint8_t keyboard_getKey()
 {
+    // 配線の都合に応じてビットマスクを修正
     static const uint32_t KB_MASK[] = {
-        0x00000001, // GS3
-        0x00000002, // A3 
-        0x00000004, // AS3
-        0x00000008, // B3 
-        0x00000010, // C4 
-        0x00000020, // CS4
-        0x00000040, // D4 
-        0x00000080, // DS4
-        0x00000100, // E4 
-        0x00000200, // F4 
-        0x00000400, // FS4
-        0x00000800, // G4 
-        0x00001000, // GS4
-        0x00002000, // A4 
-        0x00004000, // AS4
-        0x00008000, // B4 
-        0x00010000, // C5 
-        0x00020000, // CS5
-        0x00040000, // D5 
-        0x00080000, // DS5
-        0x00100000, // E5 
-        0x00200000, // F5 
+        0x00000100, // GS3
+        0x00000200, // A3 
+        0x00000400, // AS3
+        0x00000800, // B3 
+        0x00001000, // C4 
+        0x00002000, // CS4
+        0x00004000, // D4 
+        0x00008000, // DS4
+        0x00000008, // E4 
+        0x00000004, // F4 
+        0x00000002, // FS4
+        0x00000001, // G4 
+        0x00800000, // GS4
+        0x00400000, // A4 
+        0x00200000, // AS4
+        0x00100000, // B4 
+        0x00080000, // C5 
+        0x00040000, // CS5
+        0x00020000, // D5 
+        0x00010000, // DS5
+        0x40000000, // E5 
+        0x80000000, // F5 
     };
     
     uint16_t kb1 = keyboard1.readGPIOAB();
     uint16_t kb2 = keyboard2.readGPIOAB();
     uint32_t kb = (uint32_t)kb1 | ((uint32_t)kb2 << 16);
     kb = ~kb;
+    Serial.printf("%08X\n", kb);
     
     uint8_t key = NOTE_G3;
     for(int i = 21; i >= 0; i--){
