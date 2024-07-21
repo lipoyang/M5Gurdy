@@ -1,7 +1,7 @@
 # M5Gurdy
 ヨーロッパの古楽器ハーディーガーディーをM5StackとMIDI音源で再現した電子楽器
 
-[![代替テキスト](https://img.youtube.com/vi/ほげ/0.jpg)](https://www.youtube.com/watch?v=ほげ)
+<!--[![代替テキスト](https://img.youtube.com/vi/ほげ/0.jpg)](https://www.youtube.com/watch?v=ほげ) -->
 
 ## 概要
 <img src="image/m5gurdy.jpg" width="512">
