@@ -52,7 +52,7 @@ class M5UnitSynth {
     void setMasterVolume(uint8_t level);             // 0-127
     void setVolume(uint8_t channel, uint8_t level);  // 0-127
     
-    void setExpression(uint8_t channel, uint8_t velocity);
+    void setExpression(uint8_t channel, uint8_t expression);
 
     void setReverb(uint8_t channel, uint8_t program, uint8_t level,
                    uint8_t delayfeedback);

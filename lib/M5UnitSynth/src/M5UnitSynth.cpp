@@ -74,9 +74,9 @@ void M5UnitSynth::setVolume(uint8_t channel, uint8_t level) {
     sendCMD(CMD_CONTROL_CHANGE, sizeof(CMD_CONTROL_CHANGE));
 }
 
-void M5UnitSynth::setExpression(uint8_t channel, uint8_t velocity) {
+void M5UnitSynth::setExpression(uint8_t channel, uint8_t expression) {
     uint8_t CMD_CONTROL_CHANGE[] = {
-        (uint8_t)(MIDI_CMD_CONTROL_CHANGE | (channel & 0x0f)), 0x0b, velocity};
+        (uint8_t)(MIDI_CMD_CONTROL_CHANGE | (channel & 0x0f)), 0x0b, expression};
     sendCMD(CMD_CONTROL_CHANGE, sizeof(CMD_CONTROL_CHANGE));
 }
 
