@@ -1,5 +1,5 @@
-// #include <M5Stack.h>
-#include <Arduino.h>
+#include <M5Stack.h>
+//#include <Arduino.h>
 #include <Adafruit_MCP23X17.h>
 #include <M5UnitSynth.h>
 #include <PollingTimer.h>
@@ -17,6 +17,14 @@
 
 // 周期[msec]
 #define INTERVAL1       20
+
+// ドローン弦のキー
+#define NOTE_DRONE1     NOTE_C4
+#define NOTE_DRONE2     NOTE_G3
+#define NOTE_DRONE3     NOTE_C3
+#define NOTE_DRONE4     NOTE_G2
+// 1オクターブ
+#define ONE_OCTAVE      12
 
 // 鍵盤入力のIOエキスパンダ
 Adafruit_MCP23X17 keyboard1;
@@ -36,8 +44,13 @@ uint8_t crank_getVelocity();
 // 初期化
 void setup()
 {
+    M5.begin();
+
     // シリアルポートの初期化(デバッグ用)
-    Serial.begin(115200); // ← DisplayUI_begin()を実行する場合には不要
+    // Serial.begin(115200);
+
+    pinMode(21, INPUT_PULLUP); //デファルトのSDAピン21　のプルアップの指定
+    pinMode(22, INPUT_PULLUP); //デファルトのSCLピン22　のプルアップの指定
     
     // 鍵盤の初期化
     keyboard_begin();
@@ -47,7 +60,12 @@ void setup()
 
     // シンセユニットの初期化
     synth.begin(&Serial2, UNIT_SYNTH_BAUD, PIN_RXD2, PIN_TXD2);
-    synth.setInstrument(0, 0, Sitar);
+    synth.setInstrument(0, 0, Violin);
+    synth.setInstrument(0, 1, Violin);
+    synth.setInstrument(0, 2, Violin);
+    synth.setInstrument(0, 3, Violin);
+    synth.setInstrument(0, 4, Violin);
+    synth.setInstrument(0, 5, Violin);
     
     // 制御周期の設定
     interval1.set(INTERVAL1);
@@ -56,11 +74,54 @@ void setup()
 // メインループ
 void loop()
 {
+    static uint8_t key_prev = 255;
+    static uint8_t exp_prev = 0;
+
     if(interval1.elapsed()){
+        uint8_t expression = crank_getVelocity();
         uint8_t key = keyboard_getKey();
-        uint8_t velocity = crank_getVelocity();
-        // Serial.printf("%d %d\n", key, velocity);
-        synth.setNoteOn(0, key, velocity);
+
+        if(expression > 0){
+            synth.setExpression(0, expression);
+            synth.setExpression(1, expression);
+            synth.setExpression(2, expression);
+            synth.setExpression(3, expression);
+            synth.setExpression(4, expression);
+            synth.setExpression(5, expression);
+        }
+
+        // 鳴り始め
+        if(exp_prev == 0 && expression > 0){
+            synth.setNoteOn(0, key, 127);
+            synth.setNoteOn(1, key + ONE_OCTAVE, 127);
+            synth.setNoteOn(2, NOTE_DRONE1, 127);
+            synth.setNoteOn(3, NOTE_DRONE2, 127);
+            synth.setNoteOn(4, NOTE_DRONE3, 127);
+            synth.setNoteOn(5, NOTE_DRONE4, 127);
+            Serial.printf("ON(1) %d %d\n", key, expression);
+        }
+        // 鳴り終わり
+        else if(exp_prev > 0 && expression == 0){
+            synth.setNoteOff(0, key_prev, 0);
+            synth.setNoteOff(1, key_prev + ONE_OCTAVE, 0);
+            synth.setNoteOff(2, NOTE_DRONE1, 0);
+            synth.setNoteOff(3, NOTE_DRONE2, 0);
+            synth.setNoteOff(4, NOTE_DRONE3, 0);
+            synth.setNoteOff(5, NOTE_DRONE4, 0);
+            Serial.printf("OFF %d\n", key_prev);
+        }
+        // 鳴り途中
+        else if(expression > 0){
+            if(key != key_prev){
+                synth.setNoteOff(0, key_prev, 0);
+                synth.setNoteOff(1, key_prev + ONE_OCTAVE, 0);
+                synth.setNoteOn(0, key, 127);
+                synth.setNoteOn(1, key + ONE_OCTAVE, 127);
+                Serial.printf("ON(2) %d %d\n", key, expression);
+            }
+        }
+        key_prev = key;
+        exp_prev = expression;
     }
 }
 
@@ -122,7 +183,7 @@ uint8_t keyboard_getKey()
     uint16_t kb2 = keyboard2.readGPIOAB();
     uint32_t kb = (uint32_t)kb1 | ((uint32_t)kb2 << 16);
     kb = ~kb;
-    Serial.printf("%08X\n", kb);
+    // Serial.printf("%08X\n", kb);
     
     uint8_t key = NOTE_G3;
     for(int i = 21; i >= 0; i--){
