@@ -36,10 +36,10 @@ M5UnitSynth synth;
 // インターバルタイマ
 IntervalTimer interval1;
 
-void keyboard_begin();
+void    keyboard_begin();
 uint8_t keyboard_getKey();
-void crank_begin();
-uint8_t crank_getVelocity();
+void    crank_begin();
+uint8_t crank_getVolume();
 
 // 初期化
 void setup()
@@ -60,12 +60,19 @@ void setup()
 
     // シンセユニットの初期化
     synth.begin(&Serial2, UNIT_SYNTH_BAUD, PIN_RXD2, PIN_TXD2);
+    synth.setMasterVolume(127);
+    synth.setVolume(0, 127);
+    synth.setVolume(1, 127);
+    synth.setVolume(2, 127);
+    synth.setVolume(3, 127);
+    synth.setVolume(4, 127);
+    synth.setVolume(5, 127);
     synth.setInstrument(0, 0, Violin);
     synth.setInstrument(0, 1, Violin);
-    synth.setInstrument(0, 2, Violin);
-    synth.setInstrument(0, 3, Violin);
-    synth.setInstrument(0, 4, Violin);
-    synth.setInstrument(0, 5, Violin);
+    synth.setInstrument(0, 2, Cello);
+    synth.setInstrument(0, 3, Cello);
+    synth.setInstrument(0, 4, Contrabass);
+    synth.setInstrument(0, 5, Contrabass);
     
     // 制御周期の設定
     interval1.set(INTERVAL1);
@@ -78,7 +85,7 @@ void loop()
     static uint8_t exp_prev = 0;
 
     if(interval1.elapsed()){
-        uint8_t expression = crank_getVelocity();
+        uint8_t expression = crank_getVolume();
         uint8_t key = keyboard_getKey();
 
         if(expression > 0){
@@ -183,7 +190,7 @@ uint8_t keyboard_getKey()
     uint16_t kb2 = keyboard2.readGPIOAB();
     uint32_t kb = (uint32_t)kb1 | ((uint32_t)kb2 << 16);
     kb = ~kb;
-    // Serial.printf("%08X\n", kb);
+    // Serial.printf("keyboard_getKey: %08X\n", kb);
     
     uint8_t key = NOTE_G3;
     for(int i = 21; i >= 0; i--){
@@ -218,12 +225,10 @@ void crank_begin()
     pcnt_counter_pause(PCNT_UNIT_0);
     pcnt_counter_clear(PCNT_UNIT_0);
     pcnt_counter_resume(PCNT_UNIT_0);
-
-    // pcnt_get_counter_value(PCNT_UNIT_0, &count_old);
 }
 
 // クランクの入力を取得
-uint8_t crank_getVelocity()
+uint8_t crank_getVolume()
 {
     static const float GAIN = 100.0f;
     static const float IIR = 0.1f;
