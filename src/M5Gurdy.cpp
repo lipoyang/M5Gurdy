@@ -241,10 +241,23 @@ uint8_t crank_getVolume()
     if(diff < 0) diff = -diff;
     count_old = count;
 
-    volume = (1.0f - IIR) * volume + IIR * GAIN * (float)diff;
+    static int ave_cnt = 0;
+    static int16_t ave_buff[8] ={0};
+    ave_buff[ave_cnt] = diff;
+    ave_cnt++;
+    if(ave_cnt >= 8) ave_cnt = 0;
+    int16_t ave_acc = 0;
+    for(int i = 0; i < 8; i++) ave_acc += ave_buff[i];
+    float ave = (float)ave_acc / 8.0f; 
+
+//  volume = (1.0f - IIR) * volume + IIR * GAIN * (float)diff;
+    volume = (1.0f - IIR) * volume + IIR * GAIN * ave;
     int i_volume = (int)volume;
     if(i_volume <   0) i_volume = 0;
     if(i_volume > 127) i_volume = 127;
+
+//  Serial.printf("crank_getVolume: %d %d\n", diff, i_volume);
+    Serial.printf("crank_getVolume: %d %.2f %d\n", diff, ave, i_volume);
 
     return (uint8_t)i_volume;
 }
