@@ -15,6 +15,9 @@
 #define ADDR_KB1       0x20    // 低音側
 #define ADDR_KB2       0x21    // 高音側
 
+// ペグ入力のIOエキスパンダのI2Cスレーブアドレス
+#define ADDR_PEG       0x22
+
 // 周期[msec]
 #define INTERVAL1       20
 
@@ -30,16 +33,26 @@
 Adafruit_MCP23X17 keyboard1;
 Adafruit_MCP23X17 keyboard2;
 
+// ペグ入力のIOエキスパンダ
+Adafruit_MCP23X17 pegInput;
+
 // シンセユニット
 M5UnitSynth synth;
 
 // インターバルタイマ
 IntervalTimer interval1;
 
+// ペグのロータリーエンコーダ用
+static int peg_clk[4];
+static const uint8_t CLK_MASK[4] = {0x01, 0x04, 0x10, 0x40};
+static const uint8_t DT_MASK [4] = {0x02, 0x08, 0x20, 0x80};
+
 void    keyboard_begin();
 uint8_t keyboard_getKey();
 void    crank_begin();
 uint8_t crank_getVolume();
+void    peg_begin();
+void    peg_get(int steps[]);
 
 // 初期化
 void setup()
@@ -51,6 +64,10 @@ void setup()
 
     pinMode(21, INPUT_PULLUP); //デファルトのSDAピン21　のプルアップの指定
     pinMode(22, INPUT_PULLUP); //デファルトのSCLピン22　のプルアップの指定
+    delay(1000);
+
+    // ペグの初期化
+    peg_begin();
     
     // 鍵盤の初期化
     keyboard_begin();
@@ -83,8 +100,11 @@ void loop()
 {
     static uint8_t key_prev = 255;
     static uint8_t exp_prev = 0;
+    int peg_steps[4];
 
     if(interval1.elapsed()){
+        peg_get(peg_steps);
+
         uint8_t expression = crank_getVolume();
         uint8_t key = keyboard_getKey();
 
@@ -257,7 +277,59 @@ uint8_t crank_getVolume()
     if(i_volume > 127) i_volume = 127;
 
 //  Serial.printf("crank_getVolume: %d %d\n", diff, i_volume);
-    Serial.printf("crank_getVolume: %d %.2f %d\n", diff, ave, i_volume);
+//  Serial.printf("crank_getVolume: %d %.2f %d\n", diff, ave, i_volume);
 
     return (uint8_t)i_volume;
 }
+
+static uint8_t val_prev;
+
+// ペグの初期化
+void peg_begin()
+{
+    if (!pegInput.begin_I2C(ADDR_PEG)) {
+        Serial.println("Peg Input Error.");
+        while (1);
+    }else{
+        Serial.println("Peg Input OK.");
+    }
+    for(int i = 0; i < 16; i++){
+        pegInput.pinMode(i, INPUT_PULLUP);
+    }
+
+    val_prev = pegInput.readGPIOA();
+    //Serial.printf("Peg %02X\n", val_prev);
+    for(int i = 0; i < 4; i++){
+        peg_clk[i] = (val_prev & CLK_MASK[i]) ? 1 : 0;
+    }
+}
+
+// ペグの回転を取得
+void peg_get(int steps[])
+{
+    uint8_t val = pegInput.readGPIOA();
+    if(val != val_prev){
+        //Serial.printf("Peg %02X\n", val);
+        val_prev = val;
+    }
+
+    for(int i = 0; i < 4; i++)
+    {
+        int clk = (val & CLK_MASK[i]) ? 1 : 0;
+        int dt  = (val & DT_MASK [i]) ? 1 : 0;
+
+        if (clk != peg_clk[i]) {
+            if (dt != clk) {
+                steps[i] = 1;
+                Serial.printf("Peg %d +\n", i);
+            } else {
+                steps[i] = -1;
+                Serial.printf("Peg %d -\n", i);
+            }
+        }else{
+            steps[i] = 0;
+        }
+        peg_clk[i] = clk;
+    }
+}
+
