@@ -10,6 +10,7 @@
 #define PIN_TXD2        17
 #define PIN_ENC_CLK     36
 #define PIN_ENC_DT      26
+#define PIN_PEG_INT     35
 
 // 鍵盤入力のIOエキスパンダのI2Cスレーブアドレス
 #define ADDR_KB1       0x20    // 低音側
@@ -43,9 +44,9 @@ M5UnitSynth synth;
 IntervalTimer interval1;
 
 // ペグのロータリーエンコーダ用
-static int peg_clk[4];
 static const uint8_t CLK_MASK[4] = {0x01, 0x04, 0x10, 0x40};
 static const uint8_t DT_MASK [4] = {0x02, 0x08, 0x20, 0x80};
+static const uint8_t CLK_PIN [4] = {0, 2, 4, 6};
 
 void    keyboard_begin();
 uint8_t keyboard_getKey();
@@ -102,9 +103,13 @@ void loop()
     static uint8_t exp_prev = 0;
     int peg_steps[4];
 
-    if(interval1.elapsed()){
+    if (!digitalRead(PIN_PEG_INT)) {
         peg_get(peg_steps);
+    }
+    return; // TOOD
 
+    if(interval1.elapsed())
+    {
         uint8_t expression = crank_getVolume();
         uint8_t key = keyboard_getKey();
 
@@ -282,14 +287,12 @@ uint8_t crank_getVolume()
     return (uint8_t)i_volume;
 }
 
-static uint8_t val_prev;
-
 // ペグの初期化
 void peg_begin()
 {
     if (!pegInput.begin_I2C(ADDR_PEG)) {
         Serial.println("Peg Input Error.");
-        while (1);
+        return; // while (1);
     }else{
         Serial.println("Peg Input OK.");
     }
@@ -297,39 +300,36 @@ void peg_begin()
         pegInput.pinMode(i, INPUT_PULLUP);
     }
 
-    val_prev = pegInput.readGPIOA();
-    //Serial.printf("Peg %02X\n", val_prev);
-    for(int i = 0; i < 4; i++){
-        peg_clk[i] = (val_prev & CLK_MASK[i]) ? 1 : 0;
-    }
+    pegInput.setupInterrupts(true, false, LOW);
+    pegInput.setupInterruptPin(0, CHANGE);
+    pegInput.setupInterruptPin(2, CHANGE);
+    pegInput.setupInterruptPin(4, CHANGE);
+    pegInput.setupInterruptPin(6, CHANGE);
+    pinMode(PIN_PEG_INT, INPUT);
+//  attachInterrupt(digitalPinToInterrupt(PIN_PEG_INT), peg_int, FALLING);
 }
 
 // ペグの回転を取得
 void peg_get(int steps[])
 {
-    uint8_t val = pegInput.readGPIOA();
-    if(val != val_prev){
-        //Serial.printf("Peg %02X\n", val);
-        val_prev = val;
-    }
+    //uint8_t val = pegInput.readGPIOA();
+    uint8_t last_pin = pegInput.getLastInterruptPin(); 
+    uint8_t val  = (uint8_t)(pegInput.getCapturedInterrupt() & 0x00FF);
 
-    for(int i = 0; i < 4; i++)
-    {
-        int clk = (val & CLK_MASK[i]) ? 1 : 0;
-        int dt  = (val & DT_MASK [i]) ? 1 : 0;
-
-        if (clk != peg_clk[i]) {
-            if (dt != clk) {
-                steps[i] = 1;
-                Serial.printf("Peg %d +\n", i);
-            } else {
-                steps[i] = -1;
-                Serial.printf("Peg %d -\n", i);
+    for(int i = 0; i < 4; i++) {
+        steps[i] = 0;
+        if(last_pin == CLK_PIN[i]) {
+            int clk = (val & CLK_MASK[i]) ? 1 : 0;
+            int dt  = (val & DT_MASK [i]) ? 1 : 0;
+            if(clk == LOW){
+                if (dt != clk) {
+                    Serial.printf("Peg %d +\n", i);
+                    steps[i] = 1;
+                } else {
+                    Serial.printf("Peg %d -\n", i);
+                    steps[i] = -1;
+                }
             }
-        }else{
-            steps[i] = 0;
         }
-        peg_clk[i] = clk;
     }
 }
-
