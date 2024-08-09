@@ -5,6 +5,8 @@
 #include <PollingTimer.h>
 #include <driver/pcnt.h>
 
+#include "DisplayUI.h"
+
 // ピン
 #define PIN_RXD2        16
 #define PIN_TXD2        17
@@ -48,6 +50,10 @@ static const uint8_t CLK_MASK[4] = {0x01, 0x04, 0x10, 0x40};
 static const uint8_t DT_MASK [4] = {0x02, 0x08, 0x20, 0x80};
 static const uint8_t CLK_PIN [4] = {0, 2, 4, 6};
 
+int master_vol;      // マスター音量
+int tone_no;         // 音色
+int scale;           // 音階(ハ長調からどれだけ上がるか下がるか)
+
 void    keyboard_begin();
 uint8_t keyboard_getKey();
 void    crank_begin();
@@ -58,14 +64,12 @@ void    peg_get(int steps[]);
 // 初期化
 void setup()
 {
-    M5.begin();
-
-    // シリアルポートの初期化(デバッグ用)
-    // Serial.begin(115200);
+    // UIの初期化
+    DisplayUI_begin();
 
     pinMode(21, INPUT_PULLUP); //デファルトのSDAピン21　のプルアップの指定
     pinMode(22, INPUT_PULLUP); //デファルトのSCLピン22　のプルアップの指定
-    delay(1000);
+    delay(100);
 
     // ペグの初期化
     peg_begin();
@@ -106,7 +110,6 @@ void loop()
     if (!digitalRead(PIN_PEG_INT)) {
         peg_get(peg_steps);
     }
-    return; // TOOD
 
     if(interval1.elapsed())
     {
@@ -154,6 +157,11 @@ void loop()
         }
         key_prev = key;
         exp_prev = expression;
+
+        // UIの処理
+        int key12  = key % 12;
+        int octave = key / 12 - 1;
+        DisplayUI_loop(octave, key12, expression);
     }
 }
 
@@ -163,6 +171,7 @@ void keyboard_begin()
     // 低音側
     if (!keyboard1.begin_I2C(ADDR_KB1)) {
         Serial.println("Keyboard(L) Error.");
+        DisplayUI_error("Keyboard(L)");
         while (1);
     }else{
         Serial.println("Keyboard(L) OK.");
@@ -173,6 +182,7 @@ void keyboard_begin()
     // 高音側
     if (!keyboard2.begin_I2C(ADDR_KB2)) {
         Serial.println("Keyboard(H) Error.");
+        DisplayUI_error("Keyboard(H)");
         while (1);
     }else{
         Serial.println("Keyboard(H) OK.");
@@ -292,6 +302,7 @@ void peg_begin()
 {
     if (!pegInput.begin_I2C(ADDR_PEG)) {
         Serial.println("Peg Input Error.");
+        DisplayUI_error("Peg Input");
         return; // while (1);
     }else{
         Serial.println("Peg Input OK.");
