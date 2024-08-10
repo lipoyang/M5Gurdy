@@ -50,6 +50,24 @@ static const uint8_t CLK_MASK[4] = {0x01, 0x04, 0x10, 0x40};
 static const uint8_t DT_MASK [4] = {0x02, 0x08, 0x20, 0x80};
 static const uint8_t CLK_PIN [4] = {0, 2, 4, 6};
 
+static const uint8_t TIMBRE[][4] = {
+    {Violin,      Violin,      Cello,       Contrabass }, // Strings
+    {SopranoSax,  AltoSax,     TenorSax,    BaritoneSax}, // Saxophone
+    {Flute,       Oboe,        Clarinet,    Bassoon    }, // Woodwind
+    {Trumpet,     Trombone,    Tuba,        FrenchHorn }, // Brass
+    {BagPipe,     BagPipe,     BagPipe,     BagPipe    }, // Bagpipes
+    {ChurchOrgan, ChurchOrgan, ChurchOrgan, ChurchOrgan}, // Church Organ
+    {AccordionFrench, AccordionFrench, AccordionFrench, AccordionFrench}, //Accordion
+    {GrandPiano_1,    GrandPiano_1,    GrandPiano_1,    GrandPiano_1}, // Piano
+    {ElPiano1,    ElPiano1,    ElPiano1,    ElPiano1   }, // E.Piano
+    {OverdrivenGuitar, OverdrivenGuitar, FingerBass, FingerBass}, // E.Guitar
+    {Lead1Square, Lead8BassLead, Pad3PolySynth, Pad3PolySynth}, // Synthesizer
+    {StringEnsemble1, StringEnsemble1, StringEnsemble1, StringEnsemble1}, // Ensamble 1
+    {SynthStrings1, SynthStrings1, SynthStrings1, SynthStrings1}, // Ensamble 2
+    {SynthBrass2, SynthBrass2, SynthBrass2, SynthBrass2}, // Ensamble 3
+    {ChoirAahs,   ChoirAahs,   ChoirAahs,   ChoirAahs  }, // Chorus
+};
+
 #define TONE_MAX        14  // 音色番号の最大値
 #define DRONE_MODE_MAX  4   // ドローンモードの最大値
 
@@ -93,12 +111,12 @@ void setup()
     synth.setVolume(3, 127);
     synth.setVolume(4, 127);
     synth.setVolume(5, 127);
-    synth.setInstrument(0, 0, Violin);
-    synth.setInstrument(0, 1, Violin);
-    synth.setInstrument(0, 2, Cello);
-    synth.setInstrument(0, 3, Cello);
-    synth.setInstrument(0, 4, Contrabass);
-    synth.setInstrument(0, 5, Contrabass);
+    synth.setInstrument(0, 0, TIMBRE[tone_no][0]);
+    synth.setInstrument(0, 1, TIMBRE[tone_no][1]);
+    synth.setInstrument(0, 2, TIMBRE[tone_no][2]);
+    synth.setInstrument(0, 3, TIMBRE[tone_no][2]);
+    synth.setInstrument(0, 4, TIMBRE[tone_no][3]);
+    synth.setInstrument(0, 5, TIMBRE[tone_no][3]);
     
     // 制御周期の設定
     interval1.set(INTERVAL1);
@@ -127,6 +145,12 @@ void loop()
             tone_no += peg_steps[1];
             if(tone_no < 0) tone_no = 0;
             if(tone_no > TONE_MAX) tone_no = TONE_MAX;
+            synth.setInstrument(0, 0, TIMBRE[tone_no][0]);
+            synth.setInstrument(0, 1, TIMBRE[tone_no][1]);
+            synth.setInstrument(0, 2, TIMBRE[tone_no][2]);
+            synth.setInstrument(0, 3, TIMBRE[tone_no][2]);
+            synth.setInstrument(0, 4, TIMBRE[tone_no][3]);
+            synth.setInstrument(0, 5, TIMBRE[tone_no][3]);
         }
         // マスター音量
         if(peg_steps[2] != 0){
