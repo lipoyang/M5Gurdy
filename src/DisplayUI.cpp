@@ -194,6 +194,7 @@ static void DisplayUI_sound(int octave, int key12, int vol)
 {
     // オクターブごとの表示色のRGB値 (M5の色定数は5:6:5の16ビットカラー)
     static const uint16_t COLOR_TABLE[][3] = {
+        { (RED    >> 11) & 0x1F, (RED    >> 5) & 0x3F, RED    & 0x1F }, // O2 赤色
         { (ORANGE >> 11) & 0x1F, (ORANGE >> 5) & 0x3F, ORANGE & 0x1F }, // O3 オレンジ色
         { (YELLOW >> 11) & 0x1F, (YELLOW >> 5) & 0x3F, YELLOW & 0x1F }, // O4 黄色
         { (GREEN  >> 11) & 0x1F, (GREEN  >> 5) & 0x3F, GREEN  & 0x1F }, // O5 緑色
@@ -205,7 +206,7 @@ static void DisplayUI_sound(int octave, int key12, int vol)
     };
     
     // 音量によって明度を変える
-    int index = octave - 3;
+    int index = octave - 2;
     uint16_t r = COLOR_TABLE[index][0];
     uint16_t g = COLOR_TABLE[index][1];
     uint16_t b = COLOR_TABLE[index][2];

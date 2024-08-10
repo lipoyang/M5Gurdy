@@ -132,7 +132,9 @@ void loop()
         if(peg_steps[2] != 0){
             master_vol += peg_steps[2];
             if(master_vol < 0)  master_vol = 0;
-            if(master_vol > 32) master_vol = 32; 
+            if(master_vol > 32) master_vol = 32;
+            uint8_t vol = (uint8_t)((master_vol > 0) ? master_vol * 4 - 1 : 0);
+            synth.setMasterVolume(vol);
         }
         // キー
         if(peg_steps[3] != 0){
@@ -148,8 +150,15 @@ void loop()
 
     if(interval1.elapsed())
     {
+        static uint8_t note[6];
         uint8_t expression = crank_getVolume();
         uint8_t key = keyboard_getKey();
+
+        key += scale;
+        uint8_t note_drone1 = NOTE_DRONE1 + scale;
+        uint8_t note_drone2 = NOTE_DRONE2 + scale;
+        uint8_t note_drone3 = NOTE_DRONE3 + scale;
+        uint8_t note_drone4 = NOTE_DRONE4 + scale;
 
         if(expression > 0){
             synth.setExpression(0, expression);
@@ -162,31 +171,36 @@ void loop()
 
         // 鳴り始め
         if(exp_prev == 0 && expression > 0){
-            synth.setNoteOn(0, key, 127);
-            synth.setNoteOn(1, key + ONE_OCTAVE, 127);
-            synth.setNoteOn(2, NOTE_DRONE1, 127);
-            synth.setNoteOn(3, NOTE_DRONE2, 127);
-            synth.setNoteOn(4, NOTE_DRONE3, 127);
-            synth.setNoteOn(5, NOTE_DRONE4, 127);
+            synth.setNoteOn(0, key + ONE_OCTAVE, 127);
+            synth.setNoteOn(1, key, 127);
+            synth.setNoteOn(2, note_drone1, 127);
+            synth.setNoteOn(3, note_drone2, 127);
+            synth.setNoteOn(4, note_drone3, 127);
+            synth.setNoteOn(5, note_drone4, 127);
+            note[0] = key + ONE_OCTAVE;
+            note[1] = key;
+            note[2] = note_drone1;
+            note[3] = note_drone2;
+            note[4] = note_drone3;
+            note[5] = note_drone4;
             Serial.printf("ON(1) %d %d\n", key, expression);
         }
         // 鳴り終わり
         else if(exp_prev > 0 && expression == 0){
-            synth.setNoteOff(0, key_prev, 0);
-            synth.setNoteOff(1, key_prev + ONE_OCTAVE, 0);
-            synth.setNoteOff(2, NOTE_DRONE1, 0);
-            synth.setNoteOff(3, NOTE_DRONE2, 0);
-            synth.setNoteOff(4, NOTE_DRONE3, 0);
-            synth.setNoteOff(5, NOTE_DRONE4, 0);
-            Serial.printf("OFF %d\n", key_prev);
+            for(int i = 0; i < 6; i++){
+                synth.setNoteOff(i, note[i], 0);
+            }
+            Serial.printf("OFF %d\n", note[1]);
         }
         // 鳴り途中
         else if(expression > 0){
             if(key != key_prev){
-                synth.setNoteOff(0, key_prev, 0);
-                synth.setNoteOff(1, key_prev + ONE_OCTAVE, 0);
-                synth.setNoteOn(0, key, 127);
-                synth.setNoteOn(1, key + ONE_OCTAVE, 127);
+                synth.setNoteOff(0, note[0], 0);
+                synth.setNoteOff(1, note[1], 0);
+                synth.setNoteOn(0, key + ONE_OCTAVE, 127);
+                synth.setNoteOn(1, key, 127);
+                note[0] = key + ONE_OCTAVE;
+                note[1] = key;
                 Serial.printf("ON(2) %d %d\n", key, expression);
             }
         }
