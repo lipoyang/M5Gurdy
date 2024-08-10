@@ -50,8 +50,8 @@ static const uint8_t CLK_MASK[4] = {0x01, 0x04, 0x10, 0x40};
 static const uint8_t DT_MASK [4] = {0x02, 0x08, 0x20, 0x80};
 static const uint8_t CLK_PIN [4] = {0, 2, 4, 6};
 
-// 音色番号の最大値
-#define TONE_MAX 14
+#define TONE_MAX        14  // 音色番号の最大値
+#define DRONE_MODE_MAX  4   // ドローンモードの最大値
 
 int master_vol = 32; // マスター音量 0-32 (=> 0-127)
 int tone_no = 0;     // 音色
@@ -116,7 +116,11 @@ void loop()
         bool changed = peg_get(peg_steps);
         // ドローンモード
         if(peg_steps[0] != 0){
-
+            drone_mode += peg_steps[0];
+            if(drone_mode < 0) drone_mode = 0;
+            if(drone_mode > DRONE_MODE_MAX) drone_mode = DRONE_MODE_MAX;
+            changed = false;
+            DisplayUI_droneMode(drone_mode);
         }
         // 音色
         if(peg_steps[1] != 0){

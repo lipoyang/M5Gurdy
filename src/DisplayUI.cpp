@@ -1,4 +1,6 @@
 #include <M5Stack.h>
+#include <PollingTimer.h>
+#include "DisplayUI.h"
 #include "Icon_Scale.h"
 #include "Icon_Volume.h"
 
@@ -40,9 +42,12 @@ TFT_eSprite spriteScale  = TFT_eSprite(&M5.Lcd);
 TFT_eSprite spriteVolume = TFT_eSprite(&M5.Lcd);
 TFT_eSprite spriteError  = TFT_eSprite(&M5.Lcd);
 
+// ポップアップ表示
+bool isPopup = false;
+OneShotTimer popupTimer;
+
 // サブルーチン
 static void DisplayUI_frame();
-void DisplayUI_settings();
 static void DisplayUI_sound(int octave, int key12, int vol);
 
 // 初期化
@@ -104,7 +109,14 @@ void DisplayUI_loop(int octave, int key12, int vol)
     cnt++;
     if(cnt >= 4){
         cnt = 0;
-        DisplayUI_sound(octave, key12, vol);
+        if(!isPopup){
+            DisplayUI_sound(octave, key12, vol);
+        }
+    }
+    // ポップアップの解除
+    if(isPopup && popupTimer.elapsed()){
+        isPopup = false;
+        DisplayUI_error("");
     }
 }
 
@@ -234,4 +246,36 @@ void DisplayUI_error(const char* error)
         spriteError.print(error);
     }
     spriteError.pushSprite(X_ERROR, Y_ERROR1); 
+}
+
+// ドローンモード表示
+void DisplayUI_droneMode(int mode)
+{
+    static const char* CHANTER_INFO[] = {
+        " 2 Chanters",
+        " 2 Chanters",
+        " 2 Chanters",
+        " 1 Chanter",
+        " 1 Chanter",
+    };
+    static const char* DRONE_INFO[] = {
+        " 4 Drones",
+        " 2 Drones",
+        " No Drone",
+        " 2 Drones",
+        " No Drone",
+    };
+
+    spriteError.setTextColor(GREEN);
+    spriteError.fillRect(0,0,W_ERROR,H_ERROR,BLACK);
+    
+    spriteError.setCursor(0,0);
+    spriteError.print(CHANTER_INFO[mode]);
+    spriteError.setCursor(0,Y_ERROR2 - Y_ERROR1);
+    spriteError.print(DRONE_INFO[mode]);
+
+    spriteError.pushSprite(X_ERROR, Y_ERROR1);
+
+    isPopup = true;
+    popupTimer.set(1000);
 }
