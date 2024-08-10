@@ -196,11 +196,17 @@ void loop()
         // 鳴り始め
         if(exp_prev == 0 && expression > 0){
             synth.setNoteOn(0, key + ONE_OCTAVE, 127);
-            synth.setNoteOn(1, key, 127);
-            synth.setNoteOn(2, note_drone1, 127);
-            synth.setNoteOn(3, note_drone2, 127);
-            synth.setNoteOn(4, note_drone3, 127);
-            synth.setNoteOn(5, note_drone4, 127);
+            if(drone_mode <= 2){
+                synth.setNoteOn(1, key, 127);
+            }
+            if(drone_mode <= 1 || drone_mode == 3){
+                synth.setNoteOn(2, note_drone1, 127);
+                synth.setNoteOn(3, note_drone2, 127);
+            }
+            if(drone_mode == 0){
+                synth.setNoteOn(4, note_drone3, 127);
+                synth.setNoteOn(5, note_drone4, 127);
+            }
             note[0] = key + ONE_OCTAVE;
             note[1] = key;
             note[2] = note_drone1;
@@ -222,7 +228,9 @@ void loop()
                 synth.setNoteOff(0, note[0], 0);
                 synth.setNoteOff(1, note[1], 0);
                 synth.setNoteOn(0, key + ONE_OCTAVE, 127);
-                synth.setNoteOn(1, key, 127);
+                if(drone_mode <= 2){
+                    synth.setNoteOn(1, key, 127);
+                }
                 note[0] = key + ONE_OCTAVE;
                 note[1] = key;
                 Serial.printf("ON(2) %d %d\n", key, expression);
