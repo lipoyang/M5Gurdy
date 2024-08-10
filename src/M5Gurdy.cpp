@@ -50,16 +50,20 @@ static const uint8_t CLK_MASK[4] = {0x01, 0x04, 0x10, 0x40};
 static const uint8_t DT_MASK [4] = {0x02, 0x08, 0x20, 0x80};
 static const uint8_t CLK_PIN [4] = {0, 2, 4, 6};
 
-int master_vol;      // マスター音量
-int tone_no;         // 音色
-int scale;           // 音階(ハ長調からどれだけ上がるか下がるか)
+// 音色番号の最大値
+#define TONE_MAX 14
+
+int master_vol = 32; // マスター音量 0-32 (=> 0-127)
+int tone_no = 0;     // 音色
+int scale = 0;       // 音階(ハ長調からどれだけ上がるか下がるか)
+int drone_mode = 0;  // ドローン切り替え
 
 void    keyboard_begin();
 uint8_t keyboard_getKey();
 void    crank_begin();
 uint8_t crank_getVolume();
 void    peg_begin();
-void    peg_get(int steps[]);
+bool    peg_get(int steps[]);
 
 // 初期化
 void setup()
@@ -107,8 +111,35 @@ void loop()
     static uint8_t exp_prev = 0;
     int peg_steps[4];
 
+    // ペグ操作
     if (!digitalRead(PIN_PEG_INT)) {
-        peg_get(peg_steps);
+        bool changed = peg_get(peg_steps);
+        // ドローンモード
+        if(peg_steps[0] != 0){
+
+        }
+        // 音色
+        if(peg_steps[1] != 0){
+            tone_no += peg_steps[1];
+            if(tone_no < 0) tone_no = 0;
+            if(tone_no > TONE_MAX) tone_no = TONE_MAX;
+        }
+        // マスター音量
+        if(peg_steps[2] != 0){
+            master_vol += peg_steps[2];
+            if(master_vol < 0)  master_vol = 0;
+            if(master_vol > 32) master_vol = 32; 
+        }
+        // キー
+        if(peg_steps[3] != 0){
+            scale += peg_steps[3];
+            if(scale < -12) scale = -12;
+            if(scale >  12) scale =  12; 
+        }
+        // 表示更新
+        if(changed){
+            DisplayUI_settings();
+        }
     }
 
     if(interval1.elapsed())
@@ -321,8 +352,10 @@ void peg_begin()
 }
 
 // ペグの回転を取得
-void peg_get(int steps[])
+bool peg_get(int steps[])
 {
+    bool changed = false;
+
     //uint8_t val = pegInput.readGPIOA();
     uint8_t last_pin = pegInput.getLastInterruptPin(); 
     uint8_t val  = (uint8_t)(pegInput.getCapturedInterrupt() & 0x00FF);
@@ -333,6 +366,7 @@ void peg_get(int steps[])
             int clk = (val & CLK_MASK[i]) ? 1 : 0;
             int dt  = (val & DT_MASK [i]) ? 1 : 0;
             if(clk == LOW){
+                changed = true;
                 if (dt != clk) {
                     Serial.printf("Peg %d +\n", i);
                     steps[i] = 1;
@@ -343,4 +377,5 @@ void peg_get(int steps[])
             }
         }
     }
+    return changed;
 }

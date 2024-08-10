@@ -7,17 +7,6 @@ extern int master_vol;      // マスター音量
 extern int tone_no;         // 音色
 extern int scale;           // 音階(ハ長調からどれだけ上がるか下がるか)
 
-// 音色番号の最大値
-#define TONE_MAX 7
-
-// カーソル位置
-#define POS_NORMAL  0   // 通常状態
-#define POS_TONE    1   // 音色変更
-#define POS_SCALE   2   // 調性変更
-#define POS_VOLUME  3   // 音量変更
-#define POS_MAX     POS_VOLUME
-static int cursol_pos = POS_NORMAL;
-
 // 描画位置
 #define X_TONE      10
 #define Y_TONE      10
@@ -53,7 +42,7 @@ TFT_eSprite spriteError  = TFT_eSprite(&M5.Lcd);
 
 // サブルーチン
 static void DisplayUI_frame();
-static void DisplayUI_settings();
+void DisplayUI_settings();
 static void DisplayUI_sound(int octave, int key12, int vol);
 
 // 初期化
@@ -63,6 +52,7 @@ void DisplayUI_begin()
 //  M5.Power.begin();
 //  M5.Speaker.setVolume(0);
 //  M5.Lcd.setBrightness(200);
+    M5.Lcd.setRotation(3); // 180度回転
 
     M5.Lcd.fillScreen(BLACK);
 
@@ -103,46 +93,16 @@ void DisplayUI_loop(int octave, int key12, int vol)
     
     // ボタン入力判定とそれに対する処理
     if (M5.BtnA.wasPressed()) {
-        cursol_pos++;
-        if(cursol_pos > POS_MAX) cursol_pos = POS_NORMAL;
-        DisplayUI_settings();
     }
-    if (cursol_pos != POS_NORMAL)
-    {
-        int change_val = 0;
-        if (M5.BtnB.wasPressed()){
-            change_val = 1;
-        }else if(M5.BtnC.wasPressed()){
-            change_val = -1;
-        }
-        if(change_val != 0){
-            switch(cursol_pos){
-            case POS_TONE:
-                tone_no += change_val;
-                if(tone_no < 0) tone_no = 0;
-                if(tone_no > TONE_MAX) tone_no = TONE_MAX;
-                break;
-            case POS_SCALE:
-                scale += change_val;
-                if(scale < -12) scale = -12;
-                if(scale >  12) scale =  12; 
-                break;
-            case POS_VOLUME:
-                master_vol += change_val;
-                if(master_vol == 31) master_vol = 0;
-                if(master_vol ==  1) master_vol = 32;
-                if(master_vol <   0) master_vol = 0;
-                if(master_vol >  63) master_vol = 63;
-                break;
-            }
-            DisplayUI_settings();
-        }
+    if (M5.BtnB.wasPressed()){
+    }
+    if(M5.BtnC.wasPressed()){
     }
     
     // サウンド出力の描画
     static int cnt = 0;
     cnt++;
-    if(cnt >= 10){
+    if(cnt >= 4){
         cnt = 0;
         DisplayUI_sound(octave, key12, vol);
     }
@@ -169,37 +129,36 @@ static void DisplayUI_frame()
 }
 
 // 設定の描画
-static void DisplayUI_settings()
+void DisplayUI_settings()
 {
     // 音色名
     static const char TONE_NAME[][13] = {
-        "Grand Piano",
-        "Tinkle Bell",
-        "Nylon Guiter",
-        "Harpsichord",
+        "Strings",
+        "Saxophone",
+        "Woodwind",
+        "Brass",
+        "Bagpipes",
         "Church Organ",
-        "Flute",
-        "Rock Organ",
-        "Harmonica"
+        "Accordion",
+        "Piano",
+        "E.Piano",
+        "E.Guitar",
+        "Synthesizer",
+        "Ensamble 1",
+        "Ensamble 2",
+        "Ensamble 3",
+        "Chorus",
     };
 
     // 音色
-    if(cursol_pos == POS_TONE){
-        spriteTone.setTextColor(RED); //, BLACK);
-    }else{
-        spriteTone.setTextColor(YELLOW); //, BLACK);
-    }
+    spriteTone.setTextColor(YELLOW); //, BLACK);
     spriteTone.fillRect(0,0,W_TONE - P_TONE,H_CHAR,BLACK);
     spriteTone.setCursor(0,0);
     spriteTone.print(TONE_NAME[tone_no]);
     spriteTone.pushSprite(X_TONE + P_TONE, Y_TONE);
 
     // 調性
-    if(cursol_pos == POS_SCALE){
-        spriteScale.setTextColor(RED); //, BLACK);
-    }else{
-        spriteScale.setTextColor(YELLOW); //, BLACK);
-    }
+    spriteScale.setTextColor(YELLOW); //, BLACK);
     spriteScale.fillRect(0,0,W_SCALE - P_SCALE,H_CHAR,BLACK);
     spriteScale.setCursor(0,0);
     if(scale > 0){
@@ -210,15 +169,11 @@ static void DisplayUI_settings()
     spriteScale.pushSprite(X_SCALE + P_SCALE, Y_SCALE);
 
     // 音量
-    if(cursol_pos == POS_VOLUME){
-        spriteVolume.setTextColor(RED); //, BLACK);
-    }else{
-        spriteVolume.setTextColor(YELLOW); //, BLACK);
-    }
+    spriteVolume.setTextColor(YELLOW); //, BLACK);
     spriteVolume.fillRect(0,0,W_VOLUME - P_VOLUME,H_CHAR,BLACK);
     spriteVolume.setCursor(0,0);
-    int vol = (master_vol >= 32) ? master_vol - 31 : 0;
-    spriteVolume.printf("%d", vol);
+    // int vol = (master_vol >= 32) ? master_vol - 31 : 0;
+    spriteVolume.printf("%d", master_vol);
     spriteVolume.pushSprite(X_VOLUME + P_VOLUME, Y_VOLUME);
 }
 
