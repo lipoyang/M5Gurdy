@@ -256,11 +256,15 @@ void DisplayUI_droneMode(int mode)
         " 2 Chanters",
         " 2 Chanters",
         " 2 Chanters",
-        " 1 Chanter",
-        " 1 Chanter",
+        " H Chanter",
+        " H Chanter",
+        " L Chanter",
+        " L Chanter",
     };
     static const char* DRONE_INFO[] = {
         " 4 Drones",
+        " 2 Drones",
+        " No Drone",
         " 2 Drones",
         " No Drone",
         " 2 Drones",

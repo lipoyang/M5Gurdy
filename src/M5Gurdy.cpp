@@ -69,12 +69,23 @@ static const uint8_t TIMBRE[][4] = {
 };
 
 #define TONE_MAX        14  // 音色番号の最大値
-#define DRONE_MODE_MAX  4   // ドローンモードの最大値
+
+// ドローンモード
+enum{
+    C2_D4 = 0,  // 旋律2弦, ドローン4弦
+    C2_D2,      // 旋律2弦, ドローン2弦
+    C2_D0,      // 旋律2弦, ドローンなし
+    CH_D2,      // 旋律1弦(高音), ドローン2弦
+    CH_D0,      // 旋律1弦(高音), ドローンなし
+    CL_D2,      // 旋律1弦(低音), ドローン2弦
+    CL_D0       // 旋律1弦(低音), ドローンなし
+};
+#define DRONE_MODE_MAX  CL_D0 // ドローンモードの最大値
 
 int master_vol = 32; // マスター音量 0-32 (=> 0-127)
 int tone_no = 0;     // 音色
 int scale = 0;       // 音階(ハ長調からどれだけ上がるか下がるか)
-int drone_mode = 0;  // ドローン切り替え
+int drone_mode = C2_D4;  // ドローン切り替え
 
 void    keyboard_begin();
 uint8_t keyboard_getKey();
@@ -195,15 +206,21 @@ void loop()
 
         // 鳴り始め
         if(exp_prev == 0 && expression > 0){
-            synth.setNoteOn(0, key + ONE_OCTAVE, 127);
-            if(drone_mode <= 2){
+            // 旋律弦(H)
+            if(drone_mode <= CH_D0){
+                synth.setNoteOn(0, key + ONE_OCTAVE, 127);
+            }
+            // 旋律弦(L)
+            if(drone_mode <= C2_D0 || drone_mode >= CL_D2){
                 synth.setNoteOn(1, key, 127);
             }
-            if(drone_mode <= 1 || drone_mode == 3){
+            // ドローン弦(H)
+            if(drone_mode != C2_D0 && drone_mode != CH_D0 && drone_mode != CL_D0){
                 synth.setNoteOn(2, note_drone1, 127);
                 synth.setNoteOn(3, note_drone2, 127);
             }
-            if(drone_mode == 0){
+            // ドローン弦(L)
+            if(drone_mode == C2_D4){
                 synth.setNoteOn(4, note_drone3, 127);
                 synth.setNoteOn(5, note_drone4, 127);
             }
@@ -227,8 +244,12 @@ void loop()
             if(key != key_prev){
                 synth.setNoteOff(0, note[0], 0);
                 synth.setNoteOff(1, note[1], 0);
-                synth.setNoteOn(0, key + ONE_OCTAVE, 127);
-                if(drone_mode <= 2){
+                // 旋律弦(H)
+                if(drone_mode <= CH_D0){
+                    synth.setNoteOn(0, key + ONE_OCTAVE, 127);
+                }
+                // 旋律弦(L)
+                if(drone_mode <= C2_D0 || drone_mode >= CL_D2){
                     synth.setNoteOn(1, key, 127);
                 }
                 note[0] = key + ONE_OCTAVE;
