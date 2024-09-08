@@ -6,6 +6,7 @@
 #include <driver/pcnt.h>
 
 #include "DisplayUI.h"
+#include "SerialCom.h" // 開発用
 
 // ピン
 #define PIN_RXD2        16
@@ -131,6 +132,9 @@ void setup()
     
     // 制御周期の設定
     interval1.set(INTERVAL1);
+
+    // シリアルコマンドの初期化 (開発用)
+    SerialCom_init();
 }
 
 // メインループ
@@ -265,6 +269,9 @@ void loop()
         int octave = key / 12 - 1;
         DisplayUI_loop(octave, key12, expression);
     }
+
+    // シリアルコマンド処理 (開発用)
+    SerialCom_loop();
 }
 
 // 鍵盤の初期化
@@ -449,4 +456,46 @@ bool peg_get(int steps[])
         }
     }
     return changed;
+}
+
+// シリアル受信コマンド処理 (開発用)
+void SerialCom_callback(char* buff)
+{
+    // 音色変更イベント
+    if(buff[0] == 'T'){
+        int ch, val;
+        int ret = sscanf(&buff[1], "%d,%d", &ch, &val);
+        if(ret == 2){
+            if(ch < 0 || ch > 3){
+                Serial.printf("invalid channel %d\n", ch);
+            }
+            else if(val < 0 || val > 127){
+                Serial.printf("invalid channel %d\n", val);
+            }
+            else{
+                Serial.printf("setInstrument ch = %d, val = %d\n", ch, val);
+
+                switch(ch){
+                    case 0:
+                        synth.setInstrument(0, 0, val);
+                        break;
+                    case 1:
+                        synth.setInstrument(0, 1, val);
+                        break;
+                    case 2:
+                        synth.setInstrument(0, 2, val);
+                        synth.setInstrument(0, 3, val);
+                        break;
+                    case 3:
+                        synth.setInstrument(0, 4, val);
+                        synth.setInstrument(0, 5, val);
+                        break;
+                }
+            }
+        }else{
+            Serial.println("syntax error!");
+        }
+    }else{
+        Serial.println("unknown command!");
+    }
 }
