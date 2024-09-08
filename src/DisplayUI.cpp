@@ -149,10 +149,10 @@ void DisplayUI_settings()
         "Bagpipes",
         "Church Organ",
         "Accordion",
-        "Woodwind",
-        "Brass",
+        "Flute",
+        "Trumpet",
         "Synthesizer",
-        "Ensamble",
+        "String Synth",
         "Chorus",
     };
 

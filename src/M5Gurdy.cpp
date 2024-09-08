@@ -56,10 +56,10 @@ static const uint8_t TIMBRE[][4] = {
     {BagPipe,     BagPipe,     BagPipe,     BagPipe    }, // Bagpipes
     {ChurchOrgan, ChurchOrgan, ChurchOrgan, ChurchOrgan}, // Church Organ
     {AccordionFrench, AccordionFrench, AccordionFrench, AccordionFrench}, //Accordion
-    {Flute,       Flute,       Clarinet,    Clarinet   }, // Woodwind
-    {Trumpet,     Trumpet,     FrenchHorn,  FrenchHorn }, // Brass
-    {Lead2Sawtooth, Lead8BassLead, Pad4Choir, Pad4Choir}, // Synthesizer
-    {StringEnsemble1, StringEnsemble1, StringEnsemble1, StringEnsemble1}, // Ensamble 1
+    {Flute,       Flute,       Flute,       Flute      }, // Flute
+    {Trumpet,     Trumpet,     Trumpet,     Trumpet    }, // Trumpet
+    {Lead2Sawtooth,   Lead8BassLead,   Pad4Choir,       Pad4Choir      }, // Synthesizer
+    {StringEnsemble1, StringEnsemble1, StringEnsemble1, StringEnsemble1}, // Ensamble
     {ChoirAahs,   ChoirAahs,   ChoirAahs,   ChoirAahs  }, // Chorus
 };
 
