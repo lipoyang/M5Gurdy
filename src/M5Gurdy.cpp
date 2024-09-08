@@ -52,24 +52,18 @@ static const uint8_t DT_MASK [4] = {0x02, 0x08, 0x20, 0x80};
 static const uint8_t CLK_PIN [4] = {0, 2, 4, 6};
 
 static const uint8_t TIMBRE[][4] = {
-    {Violin,      Violin,      Cello,       Contrabass }, // Strings
-    {SopranoSax,  AltoSax,     TenorSax,    BaritoneSax}, // Saxophone
-    {Flute,       Oboe,        Clarinet,    Bassoon    }, // Woodwind
-    {Trumpet,     Trombone,    Tuba,        FrenchHorn }, // Brass
+    {Violin,      Violin,      Cello,       Cello      }, // Strings
     {BagPipe,     BagPipe,     BagPipe,     BagPipe    }, // Bagpipes
     {ChurchOrgan, ChurchOrgan, ChurchOrgan, ChurchOrgan}, // Church Organ
     {AccordionFrench, AccordionFrench, AccordionFrench, AccordionFrench}, //Accordion
-    {GrandPiano_1,    GrandPiano_1,    GrandPiano_1,    GrandPiano_1}, // Piano
-    {ElPiano1,    ElPiano1,    ElPiano1,    ElPiano1   }, // E.Piano
-    {OverdrivenGuitar, OverdrivenGuitar, FingerBass, FingerBass}, // E.Guitar
-    {Lead1Square, Lead8BassLead, Pad3PolySynth, Pad3PolySynth}, // Synthesizer
+    {Flute,       Flute,       Clarinet,    Clarinet   }, // Woodwind
+    {Trumpet,     Trumpet,     FrenchHorn,  FrenchHorn }, // Brass
+    {Lead2Sawtooth, Lead8BassLead, Pad4Choir, Pad4Choir}, // Synthesizer
     {StringEnsemble1, StringEnsemble1, StringEnsemble1, StringEnsemble1}, // Ensamble 1
-    {SynthStrings1, SynthStrings1, SynthStrings1, SynthStrings1}, // Ensamble 2
-    {SynthBrass2, SynthBrass2, SynthBrass2, SynthBrass2}, // Ensamble 3
     {ChoirAahs,   ChoirAahs,   ChoirAahs,   ChoirAahs  }, // Chorus
 };
 
-#define TONE_MAX        14  // 音色番号の最大値
+#define TONE_MAX        8  // 音色番号の最大値
 
 // ドローンモード
 enum{

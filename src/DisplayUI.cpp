@@ -146,19 +146,13 @@ void DisplayUI_settings()
     // 音色名
     static const char TONE_NAME[][13] = {
         "Strings",
-        "Saxophone",
-        "Woodwind",
-        "Brass",
         "Bagpipes",
         "Church Organ",
         "Accordion",
-        "Piano",
-        "E.Piano",
-        "E.Guitar",
+        "Woodwind",
+        "Brass",
         "Synthesizer",
-        "Ensamble 1",
-        "Ensamble 2",
-        "Ensamble 3",
+        "Ensamble",
         "Chorus",
     };
 
