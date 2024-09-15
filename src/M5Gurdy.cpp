@@ -98,7 +98,7 @@ uint8_t crank_getVolume();
 void    peg_begin();
 bool    peg_get(int steps[]);
 void    neopixel_rotate(int diff);
-void    neopixel_loop(int octave, int key12, int vol);
+void    neopixel_loop(int key, int vol);
 
 // 初期化
 void setup()
@@ -278,7 +278,7 @@ void loop()
         DisplayUI_loop(octave, key12, expression);
 
         // NeoPixelの表示
-        neopixel_loop(octave, key12, expression);
+        neopixel_loop(key, expression);
     }
 
     // シリアルコマンド処理 (開発用)
@@ -480,17 +480,20 @@ void neopixel_rotate(int diff)
 }
 
 // NeoPixel表示
-void neopixel_loop(int octave, int key12, int vol)
+void neopixel_loop(int key, int vol)
 {
     // 表示色のRGB値
     static const int COLOR_TABLE[][3] = {
         { 0xFF, 0x00, 0x00 },   // O2 赤色
         { 0xFF, 0xA4, 0x00 },   // O3 橙色
         { 0xFF, 0xFF, 0x00 },   // O4 黄色
-        { 0x00, 0xFF, 0x00 },   // O4 緑色
-        { 0x00, 0xFF, 0xFF },   // O5 水色
-        { 0x80, 0xA4, 0xFF },   // O6 青色
+        { 0x00, 0xFF, 0x00 },   // O5 緑色
+        { 0x00, 0xFF, 0xFF },   // O6 水色
     };
+
+    key -= 6; // 調整
+    int key12  = key % 12;
+    int octave = key / 12 - 1;
 
     // 音量によって明度を変える
     int index = octave - 2;
@@ -509,12 +512,15 @@ void neopixel_loop(int octave, int key12, int vol)
     r = r * vol / VOL_SAT;
     g = g * vol / VOL_SAT;
     b = b * vol / VOL_SAT;
+    r /= 2;
+    g /= 2;
+    b /= 2;
 
     pixels.clear();
 
     int pos_deg = pos_enc * 15; // [0, 360) deg
     int pos_seg = pos_deg % 60; // [0, 60) deg
-    int pos_pix = pos_seg * 4 / 60; // [0, 3] pixel 
+    int pos_pix = pos_seg * 4 / 60; // [0, 3] pixel
 
     // Serial.printf("%d %d %d %d\n", pos_enc, pos_deg, pos_seg, pos_pix);
 
