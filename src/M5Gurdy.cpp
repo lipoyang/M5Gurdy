@@ -1,6 +1,7 @@
 #include <M5Stack.h>
 //#include <Arduino.h>
 #include <Adafruit_MCP23X17.h>
+#include <Adafruit_NeoPixel.h>
 #include <M5UnitSynth.h>
 #include <PollingTimer.h>
 #include <driver/pcnt.h>
@@ -14,6 +15,7 @@
 #define PIN_ENC_CLK     36
 #define PIN_ENC_DT      26
 #define PIN_PEG_INT     35
+#define PIN_NEOPIXEL    5
 
 // 鍵盤入力のIOエキスパンダのI2Cスレーブアドレス
 #define ADDR_KB1       0x20    // 低音側
@@ -33,6 +35,9 @@
 // 1オクターブ
 #define ONE_OCTAVE      12
 
+// LEDの数
+#define NUM_NEOPIXEL    15
+
 // 鍵盤入力のIOエキスパンダ
 Adafruit_MCP23X17 keyboard1;
 Adafruit_MCP23X17 keyboard2;
@@ -42,6 +47,9 @@ Adafruit_MCP23X17 pegInput;
 
 // シンセユニット
 M5UnitSynth synth;
+
+// NeoPixel
+Adafruit_NeoPixel pixels(NUM_NEOPIXEL, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
 
 // インターバルタイマ
 IntervalTimer interval1;
@@ -81,6 +89,7 @@ int master_vol = 32; // マスター音量 0-32 (=> 0-127)
 int tone_no = 0;     // 音色
 int scale = 0;       // 音階(ハ長調からどれだけ上がるか下がるか)
 int drone_mode = C2_D4;  // ドローン切り替え
+int pos_enc = 0;     // ロータリーエンコーダ位置 (LED表示用)
 
 void    keyboard_begin();
 uint8_t keyboard_getKey();
@@ -88,6 +97,8 @@ void    crank_begin();
 uint8_t crank_getVolume();
 void    peg_begin();
 bool    peg_get(int steps[]);
+void    neopixel_rotate(int diff);
+void    neopixel_loop(int octave, int key12, int vol);
 
 // 初期化
 void setup()
@@ -124,6 +135,9 @@ void setup()
     synth.setInstrument(0, 4, TIMBRE[tone_no][3]);
     synth.setInstrument(0, 5, TIMBRE[tone_no][3]);
     
+    // NeoPixelの初期化
+    pixels.begin();
+
     // 制御周期の設定
     interval1.set(INTERVAL1);
 
@@ -262,6 +276,9 @@ void loop()
         int key12  = key % 12;
         int octave = key / 12 - 1;
         DisplayUI_loop(octave, key12, expression);
+
+        // NeoPixelの表示
+        neopixel_loop(octave, key12, expression);
     }
 
     // シリアルコマンド処理 (開発用)
@@ -376,6 +393,7 @@ uint8_t crank_getVolume()
     int16_t count = 0;
     pcnt_get_counter_value(PCNT_UNIT_0, &count);
     int16_t diff = count - count_old;
+    neopixel_rotate(diff); // NeoPixe回転表示用
     if(diff < 0) diff = -diff;
     count_old = count;
 
@@ -450,6 +468,65 @@ bool peg_get(int steps[])
         }
     }
     return changed;
+}
+
+// NeoPixel表示位置回転
+void neopixel_rotate(int diff)
+{
+    //pos_enc += diff;
+    pos_enc -= diff;
+    if(pos_enc >= 24) pos_enc -= 24;
+    if(pos_enc <   0) pos_enc += 24;
+}
+
+// NeoPixel表示
+void neopixel_loop(int octave, int key12, int vol)
+{
+    // 表示色のRGB値
+    static const int COLOR_TABLE[][3] = {
+        { 0xFF, 0x00, 0x00 },   // O2 赤色
+        { 0xFF, 0xA4, 0x00 },   // O3 橙色
+        { 0xFF, 0xFF, 0x00 },   // O4 黄色
+        { 0x00, 0xFF, 0x00 },   // O4 緑色
+        { 0x00, 0xFF, 0xFF },   // O5 水色
+        { 0x80, 0xA4, 0xFF },   // O6 青色
+    };
+
+    // 音量によって明度を変える
+    int index = octave - 2;
+    int r0 = COLOR_TABLE[index][0];
+    int g0 = COLOR_TABLE[index][1];
+    int b0 = COLOR_TABLE[index][2];
+    int r1 = COLOR_TABLE[index+1][0];
+    int g1 = COLOR_TABLE[index+1][1];
+    int b1 = COLOR_TABLE[index+1][2];
+    int r = (r0 * (12 - key12) + r1 * key12) / 12;
+    int g = (g0 * (12 - key12) + g1 * key12) / 12;
+    int b = (b0 * (12 - key12) + b1 * key12) / 12;
+
+    const int VOL_SAT = 64; // 127以下の値で調整
+    if(vol > VOL_SAT) vol = VOL_SAT;
+    r = r * vol / VOL_SAT;
+    g = g * vol / VOL_SAT;
+    b = b * vol / VOL_SAT;
+
+    pixels.clear();
+
+    int pos_deg = pos_enc * 15; // [0, 360) deg
+    int pos_seg = pos_deg % 60; // [0, 60) deg
+    int pos_pix = pos_seg * 4 / 60; // [0, 3] pixel 
+
+    // Serial.printf("%d %d %d %d\n", pos_enc, pos_deg, pos_seg, pos_pix);
+
+    for(int i = 0; i < 15; i++){
+        int seg_i = i % 4; // [0, 3)
+        if(seg_i == pos_pix){
+            pixels.setPixelColor(i, pixels.Color(r, g, b));
+        }else{
+            pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+        }
+    }
+    pixels.show();
 }
 
 // シリアル受信コマンド処理 (開発用)
