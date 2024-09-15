@@ -278,7 +278,7 @@ void loop()
         DisplayUI_loop(octave, key12, expression);
 
         // NeoPixelの表示
-        neopixel_loop(key, expression);
+        neopixel_loop(key12, expression);
     }
 
     // シリアルコマンド処理 (開発用)
@@ -484,28 +484,23 @@ void neopixel_loop(int key, int vol)
 {
     // 表示色のRGB値
     static const int COLOR_TABLE[][3] = {
-        { 0xFF, 0x00, 0x00 },   // O2 赤色
-        { 0xFF, 0xA4, 0x00 },   // O3 橙色
-        { 0xFF, 0xFF, 0x00 },   // O4 黄色
-        { 0x00, 0xFF, 0x00 },   // O5 緑色
-        { 0x00, 0xFF, 0xFF },   // O6 水色
+        { 0xFF, 0x00, 0x00 },   // C  赤
+        { 0xE2, 0x1C, 0x00 },   // C# 赤橙
+        { 0xCB, 0x33, 0x00 },   // D  橙
+        { 0xA9, 0x55, 0x00 },   // D# 黄橙
+        { 0x7F, 0x7F, 0x00 },   // E  黄
+        { 0x00, 0xFF, 0x00 },   // F  緑
+        { 0x00, 0xCB, 0x33 },   // F# 青緑
+        { 0x00, 0x7F, 0x7F },   // G  水色
+        { 0x00, 0x33, 0xCB },   // G# 空色
+        { 0x00, 0x00, 0xFF },   // A  青   
+        { 0x33, 0x00, 0xCB },   // A# 紫
+        { 0x7F, 0x00, 0x7F },   // B  赤紫
     };
 
-    key -= 6; // 調整
-    int key12  = key % 12;
-    int octave = key / 12 - 1;
-
-    // 音量によって明度を変える
-    int index = octave - 2;
-    int r0 = COLOR_TABLE[index][0];
-    int g0 = COLOR_TABLE[index][1];
-    int b0 = COLOR_TABLE[index][2];
-    int r1 = COLOR_TABLE[index+1][0];
-    int g1 = COLOR_TABLE[index+1][1];
-    int b1 = COLOR_TABLE[index+1][2];
-    int r = (r0 * (12 - key12) + r1 * key12) / 12;
-    int g = (g0 * (12 - key12) + g1 * key12) / 12;
-    int b = (b0 * (12 - key12) + b1 * key12) / 12;
+    int r = COLOR_TABLE[key][0];
+    int g = COLOR_TABLE[key][1];
+    int b = COLOR_TABLE[key][2];
 
     const int VOL_SAT = 64; // 127以下の値で調整
     if(vol > VOL_SAT) vol = VOL_SAT;
@@ -516,14 +511,11 @@ void neopixel_loop(int key, int vol)
     g /= 2;
     b /= 2;
 
-    pixels.clear();
-
     int pos_deg = pos_enc * 15; // [0, 360) deg
     int pos_seg = pos_deg % 60; // [0, 60) deg
     int pos_pix = pos_seg * 4 / 60; // [0, 3] pixel
 
-    // Serial.printf("%d %d %d %d\n", pos_enc, pos_deg, pos_seg, pos_pix);
-
+    pixels.clear();
     for(int i = 0; i < 15; i++){
         int seg_i = i % 4; // [0, 3)
         if(seg_i == pos_pix){
