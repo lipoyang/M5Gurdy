@@ -30,3 +30,11 @@
 出典：[Wikipedia](https://ja.wikipedia.org/wiki/%E3%83%8F%E3%83%BC%E3%83%87%E3%82%A3%E3%83%BB%E3%82%AC%E3%83%BC%E3%83%87%E3%82%A3)
 
 M5Gurdyは、M5StackとMIDIシンセサイザユニットでハーディ・ガーディを再現した電子楽器です。本物のハーディ・ガーディと同様にハンドルと鍵盤で演奏し、2本の旋律弦と4本のドローン弦をシミュレートしますが、音色はさまざまに変えることができます。
+
+## 筐体設計
+- Autodesk Fusion で設計
+- シナベニヤ板 (3mm厚) をレーザー加工 
+- [データはこちら](mech/)
+
+## 詳細記事
+https://protopedia.net/prototype/5454
